@@ -12,5 +12,10 @@ namespace ElevatorProblem.Core.Entities
         {
             Name = name;
         }
+
+        public void DoAction(Action action)
+        {
+            action();
+        }
     }
 }

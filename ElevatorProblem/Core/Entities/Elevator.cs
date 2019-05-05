@@ -1,26 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ElevatorProblem.Core.Exceptions;
 using ElevatorProblem.Core.Interfaces;
 
 namespace ElevatorProblem.Core.Entities
 {
     public class Elevator : ITransport
     {
+        #region Constants
+        private const int TIMEOUT_FOR_NEW_REQUESTS = 500;
+        #endregion
+
+        #region Events
+        public event EventHandler CurrentPositionChangedEvent;
+        #endregion
+
         #region Properties
+
         public int CurrentPosition { get; private set; }
         public int MinPosition { get; private set; }
         public int MaxPosition { get; private set; }
+        public int StopPosition { get; private set; }
         #endregion
 
         #region Attributes
         private List<Route> _routesToProcess = new List<Route>();
         private SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-        private Task threadPool;
+        private Task taskt;
 
-        private RouteEngine _routeEngine = RouteEngine.GetInstance();
         #endregion
 
 
@@ -33,14 +44,15 @@ namespace ElevatorProblem.Core.Entities
 
         public async Task RequestAsync(int startPosition, int endPosition)
         {
+            var route = new Route(startPosition, endPosition);
+
+            _routesToProcess.Add(route);
+            await Task.Delay(TIMEOUT_FOR_NEW_REQUESTS);
+
             try
             {
-                var route = new Route(startPosition, endPosition);
-
                 await _semaphore.WaitAsync();
-                _routesToProcess.Add(route);
-
-                WaitingByOthersCloseRequest();
+                await StartMoving();
             }
             finally
             {
@@ -49,21 +61,102 @@ namespace ElevatorProblem.Core.Entities
         }
 
         #region Private Methods
-
-        private void WaitingByOthersCloseRequest()
+        private async Task StartMoving()
         {
-            _routeEngine.FindBetterRoute(this, _routesToProcess);
+            if (taskt == null && _routesToProcess.Any())
+            {
+                var taskMoving = Task.Run(() =>
+                {
+                    var routesToUp = _routesToProcess.Where(r => r.Direction == Enums.Direction.Up);
+                    var routesToDown = _routesToProcess.Where(r => r.Direction == Enums.Direction.Down);
+
+                    bool isToUpOnly = routesToUp.Any() && !routesToDown.Any();
+                    bool isToDownOnly = !routesToUp.Any() && routesToDown.Any();
+
+                    if (isToUpOnly)
+                        MoveToUpOnlyBehavior(routesToUp);
+                    else if (isToDownOnly)
+                        MoveToDownOnlyBehavior(routesToDown);
+                    else
+                        MoveToBothDirectionsBehavior(routesToUp, routesToDown);
+                });
+
+                await taskMoving;
+                taskMoving = null;
+            }
+        }
+
+        private void MoveToBothDirectionsBehavior(IEnumerable<Route> goingUp, IEnumerable<Route> goingDown)
+        {
+            int totalDistanceUp = CalculateTotalDistance(goingUp);
+            int totalDistanceDown = CalculateTotalDistance(goingDown);
+
+            if (totalDistanceUp >= totalDistanceDown)
+            {
+                MoveToDownOnlyBehavior(goingDown);
+                MoveToUpOnlyBehavior(goingUp);
+            }
+            else
+            {
+                MoveToUpOnlyBehavior(goingUp);
+                MoveToDownOnlyBehavior(goingDown);
+            }
+        }
+
+        private void MoveToDownOnlyBehavior(IEnumerable<Route> routeToMove)
+        {
+            int maxStartPosition = routeToMove.Max(r => r.StartPosition);
+            int minEndPosition = routeToMove.Min(r => r.EndPosition);
+
+            MoveUp(maxStartPosition);
+            MoveDown(minEndPosition);
+        }
+
+        private void MoveToUpOnlyBehavior(IEnumerable<Route> routeToMove)
+        {
+            int minStartPosition = routeToMove.Min(r => r.StartPosition);
+            int maxEndPosition = routeToMove.Max(r => r.EndPosition);
+
+            MoveDown(minStartPosition);
+            MoveUp(maxEndPosition);
+        }
+
+        private void MoveUp(int position)
+        {
+            while (CurrentPosition < position)
+            {
+                CurrentPosition++;
+                OnCurrentPositionChangedHandler();
+            }
+        }
+
+        private void MoveDown(int position)
+        {
+            while (CurrentPosition > position)
+            {
+                CurrentPosition--;
+                OnCurrentPositionChangedHandler();
+            }
+        }
+
+        private int CalculateTotalDistance(IEnumerable<Route> goingUp)
+        {
+            int totalDistance = 0;
+            foreach (var route in goingUp)
+                 totalDistance += Math.Abs(CurrentPosition - route.StartPosition) + Math.Abs(route.StartPosition - route.EndPosition);
+            
+            return totalDistance;
         }
         #endregion
 
-        private void MoveUp()
-        {
-            
-        }
+        #region Event Handlers
 
-        private void MoveDown()
+        private void OnCurrentPositionChangedHandler()
         {
+            CurrentPositionChangedEvent?.Invoke(this, EventArgs.Empty);
+
 
         }
+        #endregion
     }
 }

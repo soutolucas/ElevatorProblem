@@ -7,24 +7,24 @@ namespace ElevatorProblem.Core
 {
     public class Route
     {
-        public int StartPositon { get; private set; }
-        public int EndPositon { get; private set; }
+        public int StartPosition { get; private set; }
+        public int EndPosition { get; private set; }
 
-        public Enums.Direction Direction { get; private set; } = Enums.Direction.None;
+        public Enums.Direction Direction { get; private set; }
 
         public Route(int startPosition, int endPosition)
         {
-            StartPositon = startPosition;
-            EndPositon = endPosition;
+            StartPosition = startPosition;
+            EndPosition = endPosition;
 
             SetDirection();
         }
 
         private void SetDirection()
         {
-            if (StartPositon < EndPositon)
+            if (StartPosition < EndPosition)
                 Direction = Enums.Direction.Up;
-            else if (StartPositon > EndPositon)
+            else if (StartPosition > EndPosition)
                 Direction = Enums.Direction.Down;
             else
                 throw new SamePositionException("Start position is equal to the End position");

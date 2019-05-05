@@ -7,7 +7,6 @@ namespace ElevatorProblem.Core.Enums
     public enum Direction
     {
         Up,
-        Down,
-        None
+        Down
     }
 }
