@@ -30,7 +30,7 @@ namespace ElevatorProblem.Core.Entities
         #region Attributes
         private List<Route> _routesToProcess = new List<Route>();
         private SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-        private Task taskt;
+        private Task taskMoving;
 
         #endregion
 
@@ -63,9 +63,9 @@ namespace ElevatorProblem.Core.Entities
         #region Private Methods
         private async Task StartMoving()
         {
-            if (taskt == null && _routesToProcess.Any())
+            if (taskMoving == null && _routesToProcess.Any())
             {
-                var taskMoving = Task.Run(() =>
+                taskMoving = Task.Run(() =>
                 {
                     var routesToUp = _routesToProcess.Where(r => r.Direction == Enums.Direction.Up);
                     var routesToDown = _routesToProcess.Where(r => r.Direction == Enums.Direction.Down);
