@@ -14,12 +14,12 @@ namespace ElevatorProblem.Test
     [TestClass]
     public class ElevatorTest
     {
-        #region Question 3 tests
+        #region Scenarios Question 3
         [TestMethod]
         public async Task Request_Elavator10FloorsMultiplesRequestMoveBothDirections_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            ITransport elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 10);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 10);
             var elevatorEndPosition = 10;
 
             //act
@@ -36,7 +36,7 @@ namespace ElevatorProblem.Test
         public async Task Request_Elavator20FloorsMultiplesRequestMoveBothDirections_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            ITransport elevator = ElevatorBuild.Build(currentFloor: 3, minFloor: 1, maxFloor: 20);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 3, minFloor: 1, maxFloor: 20);
             var elevatorEndPosition = 15;
 
             //act
@@ -51,22 +51,23 @@ namespace ElevatorProblem.Test
         }
         #endregion
 
+        #region Others Scenarios
         [TestMethod]
         [ExpectedException(typeof(SamePositionException))]
         public async Task Request_TryMoveToSamePosition_SamePositionException()
         {
             //arrange
-            ITransport elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
 
             //act
             await elevator.RequestAsync(1, 1);
         }
 
         [TestMethod]
-        public async Task Request_SingleRequestMoveToUp_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_Elavator10FloorsSingleRequestMoveToUp_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            ITransport elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
             var elevatorNewPosition = 10;
 
             //act
@@ -77,10 +78,10 @@ namespace ElevatorProblem.Test
         }
 
         [TestMethod]
-        public async Task Request_SingleRequestMoveToDown_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_Elavator10FloorsSingleRequestMoveToDown_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            ITransport elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
             var elevatorNewPosition = 1;
 
             //act
@@ -91,10 +92,10 @@ namespace ElevatorProblem.Test
         }
 
         [TestMethod]
-        public async Task Request_MultiplesRequestMoveUp_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_Elavator10FloorsMultiplesRequestMoveUp_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            ITransport elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
             var elevatorEndPosition = 8;
 
             //act
@@ -109,10 +110,10 @@ namespace ElevatorProblem.Test
         }
 
         [TestMethod]
-        public async Task Request_MultiplesRequestMoveDown_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_Elavator10FloorsMultiplesRequestMoveDown_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            ITransport elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
             var elevatorEndPosition = 2;
 
             //act
@@ -124,6 +125,6 @@ namespace ElevatorProblem.Test
             //assert
             Assert.AreEqual(elevatorEndPosition, elevator.CurrentPosition);
         }
-
+        #endregion
     }
 }

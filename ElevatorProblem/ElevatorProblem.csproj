@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Core\Events\" />
+    <Compile Remove="Core\Events\**" />
+    <EmbeddedResource Remove="Core\Events\**" />
+    <None Remove="Core\Events\**" />
   </ItemGroup>
 
 </Project>

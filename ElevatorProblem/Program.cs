@@ -44,7 +44,7 @@ namespace ElevatorProblem
 
         private static void Setup()
         {
-            WriteLine("Bem vindo ao Smart-Elevador! Precisamos de algumas informações para começar:");
+            WriteLine("Bem vindo ao Elevador! Precisamos de algumas informações para começar:");
 
             WriteLine("\nQual a altura do prédio?");
             if (!int.TryParse(ReadLine(), out int heightBuilding))
@@ -60,12 +60,17 @@ namespace ElevatorProblem
 
             _elevator = new Elevator(currentFloor, minFloor, heightBuilding);
 
-            _elevator.CurrentPositionChangedEvent += CurrentPositionChangedEvent;
+            _elevator.CurrentPositionChangedEvent += CurrentPositionChangedHandler;
+            _elevator.StopPositionChangedEvent += StopPositionChangedHandler;
         }
 
-        private static void CurrentPositionChangedEvent(object sender, EventArgs e)
+        private static void CurrentPositionChangedHandler(object sender, EventArgs e)
         {
-            Write($"{_elevator.CurrentPosition}..");
+           // WriteLine($"{_elevator.CurrentPosition}..");
+        }
+        private static void StopPositionChangedHandler(object sender, EventArgs e)
+        {
+            WriteLine($"Parou no {_elevator.StopPosition} andar.");
         }
     }
 }

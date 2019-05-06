@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace ElevatorProblem.Core.Interfaces
 {
-    public interface ITransport
+    public interface IVehicle
     {
         int CurrentPosition { get;  }
         int MinPosition { get; }
