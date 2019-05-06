@@ -29,6 +29,7 @@ namespace ElevatorProblem.Core.Entities
             private set
             {
                 _currentPosition = value;
+                CheckIfNeedStop();
                 CurrentPositionChangedEvent?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -49,7 +50,10 @@ namespace ElevatorProblem.Core.Entities
 
         #region Attributes
         private List<Route> _routesToProcess = new List<Route>();
+        private List<Route> _runningRoutes = new List<Route>();
+        
         private SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _semaphoreRoutes = new SemaphoreSlim(1, 1);
         #endregion
 
         #region Constructor
@@ -65,8 +69,8 @@ namespace ElevatorProblem.Core.Entities
         public async Task RequestAsync(int startPosition, int endPosition)
         {
             var route = new Route(startPosition, endPosition);
+            await AddRoute(route);
 
-            _routesToProcess.Add(route);
             await Task.Delay(TIMEOUT_FOR_NEW_REQUESTS);
 
             try
@@ -82,25 +86,69 @@ namespace ElevatorProblem.Core.Entities
         #endregion
 
         #region Private Methods
+        private async Task AddRoute(Route route)
+        {
+            try
+            {
+                await _semaphoreRoutes.WaitAsync();
+                _routesToProcess.Add(route);
+
+            }
+            finally
+            {
+                _semaphoreRoutes.Release();
+            }
+        }
+
         private async Task StartMoving()
         {
-            if (_routesToProcess.Any())
+            await Task.Run(() =>
             {
-                await Task.Run(() =>
-                {
-                    var routesToUp = _routesToProcess.Where(r => r.Direction == Enums.Direction.Up).ToList();
-                    var routesToDown = _routesToProcess.Where(r => r.Direction == Enums.Direction.Down).ToList();
+                MoveRoutesToRunning();
 
-                    bool isToUpOnly = routesToUp.Any() && !routesToDown.Any();
-                    bool isToDownOnly = !routesToUp.Any() && routesToDown.Any();
+                var routesToUp = _runningRoutes.Where(r => r.Direction == Enums.Direction.Up);
+                var routesToDown = _runningRoutes.Where(r => r.Direction == Enums.Direction.Down);
 
-                    if (isToUpOnly)
-                        MoveToUpOnlyBehavior(routesToUp);
-                    else if (isToDownOnly)
-                        MoveToDownOnlyBehavior(routesToDown);
-                    else
-                        MoveToBothDirectionsBehavior(routesToUp, routesToDown);
-                });
+                bool isToUpOnly = routesToUp.Any() && !routesToDown.Any();
+                bool isToDownOnly = !routesToUp.Any() && routesToDown.Any();
+
+                if (isToUpOnly)
+                    MoveToUpOnlyBehavior(routesToUp);
+                else if (isToDownOnly)
+                    MoveToDownOnlyBehavior(routesToDown);
+                else
+                    MoveToBothDirectionsBehavior(routesToUp, routesToDown);
+            });
+        }
+
+        private void MoveRoutesToRunning()
+        {
+            try
+            {
+                _semaphoreRoutes.WaitAsync();
+                _runningRoutes = _routesToProcess.ToList();
+                _routesToProcess.Clear();
+            }
+            finally
+            {
+                _semaphoreRoutes.Release();
+            }
+        }
+
+        private void MoveToBothDirectionsBehavior(IEnumerable<Route> goingUp, IEnumerable<Route> goingDown)
+        {
+            int totalDistanceUp = CalculateTotalDistance(goingUp);
+            int totalDistanceDown = CalculateTotalDistance(goingDown);
+
+            if (totalDistanceUp >= totalDistanceDown)
+            {
+                MoveToDownOnlyBehavior(goingDown);
+                MoveToUpOnlyBehavior(goingUp);
+            }
+            else
+            {
+                MoveToUpOnlyBehavior(goingUp);
+                MoveToDownOnlyBehavior(goingDown);
             }
         }
 
@@ -122,31 +170,11 @@ namespace ElevatorProblem.Core.Entities
             MoveDown(minEndPosition);
         }
 
-        private void MoveToBothDirectionsBehavior(IEnumerable<Route> goingUp, IEnumerable<Route> goingDown)
-        {
-            int totalDistanceUp = CalculateTotalDistance(goingUp);
-            int totalDistanceDown = CalculateTotalDistance(goingDown);
-
-            if (totalDistanceUp >= totalDistanceDown)
-            {
-                MoveToDownOnlyBehavior(goingDown);
-                MoveToUpOnlyBehavior(goingUp);
-            }
-            else
-            {
-                MoveToUpOnlyBehavior(goingUp);
-                MoveToDownOnlyBehavior(goingDown);
-            }
-        }
-
         private void MoveUp(int position)
         {
             while (CurrentPosition < position)
             {
                 CurrentPosition++;
-
-                CheckIfNeedStop(Enums.Direction.Up);
-
             }
         }
 
@@ -155,21 +183,16 @@ namespace ElevatorProblem.Core.Entities
             while (CurrentPosition > position)
             {
                 CurrentPosition--;
-
-                CheckIfNeedStop(Enums.Direction.Down);
             }
         }
 
-        private void CheckIfNeedStop(Enums.Direction direction)
+        private void CheckIfNeedStop()
         {
-            if (_routesToProcess.Any(r => r.Direction == direction))
+            var stop = _runningRoutes.FirstOrDefault(r => r.StartPosition == CurrentPosition ||
+                                                            r.EndPosition == CurrentPosition);
+            if (stop != null)
             {
-                var stop = _routesToProcess.FirstOrDefault(r => r.StartPosition == CurrentPosition ||
-                                                                r.EndPosition == CurrentPosition);
-                if (stop != null)
-                {
-                    StopPosition = CurrentPosition;
-                }
+                StopPosition = CurrentPosition;
             }
         }
 
