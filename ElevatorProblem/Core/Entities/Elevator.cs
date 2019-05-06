@@ -54,6 +54,7 @@ namespace ElevatorProblem.Core.Entities
         
         private SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private SemaphoreSlim _semaphoreRoutes = new SemaphoreSlim(1, 1);
+        private Enums.Direction _currentDirection = Enums.Direction.None;
         #endregion
 
         #region Constructor
@@ -104,20 +105,23 @@ namespace ElevatorProblem.Core.Entities
         {
             await Task.Run(() =>
             {
-                MoveRoutesToRunning();
+                if (_routesToProcess.Any())
+                {
+                    MoveRoutesToRunning();
 
-                var routesToUp = _runningRoutes.Where(r => r.Direction == Enums.Direction.Up);
-                var routesToDown = _runningRoutes.Where(r => r.Direction == Enums.Direction.Down);
+                    var routesToUp = _runningRoutes.Where(r => r.Direction == Enums.Direction.Up);
+                    var routesToDown = _runningRoutes.Where(r => r.Direction == Enums.Direction.Down);
 
-                bool isToUpOnly = routesToUp.Any() && !routesToDown.Any();
-                bool isToDownOnly = !routesToUp.Any() && routesToDown.Any();
+                    bool isToUpOnly = routesToUp.Any() && !routesToDown.Any();
+                    bool isToDownOnly = !routesToUp.Any() && routesToDown.Any();
 
-                if (isToUpOnly)
-                    MoveToUpOnlyBehavior(routesToUp);
-                else if (isToDownOnly)
-                    MoveToDownOnlyBehavior(routesToDown);
-                else
-                    MoveToBothDirectionsBehavior(routesToUp, routesToDown);
+                    if (isToUpOnly)
+                        MoveToUpOnlyBehavior(routesToUp);
+                    else if (isToDownOnly)
+                        MoveToDownOnlyBehavior(routesToDown);
+                    else
+                        MoveToBothDirectionsBehavior(routesToUp, routesToDown);
+                }
             });
         }
 
@@ -156,40 +160,43 @@ namespace ElevatorProblem.Core.Entities
         {
             int minStartPosition = routeToMove.Min(r => r.StartPosition);
             int maxEndPosition = routeToMove.Max(r => r.EndPosition);
+            _currentDirection = Enums.Direction.Up;
 
             MoveDown(minStartPosition);
             MoveUp(maxEndPosition);
+
+            _currentDirection = Enums.Direction.None;
         }
 
         private void MoveToDownOnlyBehavior(IEnumerable<Route> routeToMove)
         {
             int maxStartPosition = routeToMove.Max(r => r.StartPosition);
             int minEndPosition = routeToMove.Min(r => r.EndPosition);
+            _currentDirection = Enums.Direction.Down;
 
             MoveUp(maxStartPosition);
             MoveDown(minEndPosition);
+
+            _currentDirection = Enums.Direction.None;
         }
 
         private void MoveUp(int position)
         {
             while (CurrentPosition < position)
-            {
                 CurrentPosition++;
-            }
         }
 
         private void MoveDown(int position)
         {
             while (CurrentPosition > position)
-            {
                 CurrentPosition--;
-            }
         }
 
         private void CheckIfNeedStop()
         {
-            var stop = _runningRoutes.FirstOrDefault(r => r.StartPosition == CurrentPosition ||
-                                                            r.EndPosition == CurrentPosition);
+            var stop = _runningRoutes.FirstOrDefault(r => (r.StartPosition == CurrentPosition ||
+                                                            r.EndPosition == CurrentPosition) && 
+                                                            r.Direction == _currentDirection);
             if (stop != null)
             {
                 StopPosition = CurrentPosition;
