@@ -21,7 +21,6 @@ namespace ElevatorProblem.Core.Entities
         #endregion
 
         #region Properties
-
         private int _currentPosition;
         public int CurrentPosition
         {
@@ -58,9 +57,9 @@ namespace ElevatorProblem.Core.Entities
         #endregion
 
         #region Constructor
-        public Elevator(int currentPositon, int minPosition, int maxPosition)
+        public Elevator(int currentPosition, int minPosition, int maxPosition)
         {
-            CurrentPosition = currentPositon;
+            CurrentPosition = currentPosition;
             MaxPosition = maxPosition;
             MinPosition = minPosition;
         }
@@ -69,6 +68,9 @@ namespace ElevatorProblem.Core.Entities
         #region Public Methods
         public async Task RequestAsync(int startPosition, int endPosition)
         {
+            if (startPosition < MinPosition || endPosition > MaxPosition)
+                throw new RouteOutOfRangeException($"The {nameof(startPosition)} is less than {nameof(MinPosition)} or {nameof(endPosition)} is bigger than {nameof(MaxPosition)}");
+
             var route = new Route(startPosition, endPosition);
             await AddRoute(route);
 

@@ -16,7 +16,7 @@ namespace ElevatorProblem.Test
     {
         #region Scenarios Question 3
         [TestMethod]
-        public async Task Request_Elavator10FloorsMultiplesRequestMoveBothDirections_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_10FloorsMultiplesRequestMoveBothDirections_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
             IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 10);
@@ -26,14 +26,14 @@ namespace ElevatorProblem.Test
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             elevator.RequestAsync(8, 1);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            await elevator.RequestAsync(1, 10);
+            await elevator.RequestAsync(1, elevatorEndPosition);
 
             //assert
             Assert.AreEqual(elevatorEndPosition, elevator.CurrentPosition);
         }
 
         [TestMethod]
-        public async Task Request_Elavator20FloorsMultiplesRequestMoveBothDirections_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_20FloorsMultiplesRequestMoveBothDirections_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
             IVehicle elevator = ElevatorBuild.Build(currentFloor: 3, minFloor: 1, maxFloor: 20);
@@ -57,17 +57,17 @@ namespace ElevatorProblem.Test
         public async Task Request_TryMoveToSamePosition_SamePositionException()
         {
             //arrange
-            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 10);
 
             //act
             await elevator.RequestAsync(1, 1);
         }
 
         [TestMethod]
-        public async Task Request_Elavator10FloorsSingleRequestMoveToUp_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_10FloorsSingleRequestMoveToUp_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 10);
             var elevatorNewPosition = 10;
 
             //act
@@ -78,10 +78,10 @@ namespace ElevatorProblem.Test
         }
 
         [TestMethod]
-        public async Task Request_Elavator10FloorsSingleRequestMoveToDown_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_10FloorsSingleRequestMoveToDown_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 10);
             var elevatorNewPosition = 1;
 
             //act
@@ -92,10 +92,10 @@ namespace ElevatorProblem.Test
         }
 
         [TestMethod]
-        public async Task Request_Elavator10FloorsMultiplesRequestMoveUp_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_10FloorsMultiplesRequestMoveUp_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 10);
             var elevatorEndPosition = 8;
 
             //act
@@ -109,10 +109,10 @@ namespace ElevatorProblem.Test
         }
 
         [TestMethod]
-        public async Task Request_Elavator10FloorsMultiplesRequestMoveDown_CurrentShouldBeTheEndSetPosition()
+        public async Task Request_10FloorsMultiplesRequestMoveDown_CurrentShouldBeTheEndSetPosition()
         {
             //arrange
-            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 1);
+            IVehicle elevator = ElevatorBuild.Build(currentFloor: 5, minFloor: 1, maxFloor: 10);
             var elevatorEndPosition = 2;
 
             //act

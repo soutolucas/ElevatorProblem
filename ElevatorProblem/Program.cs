@@ -11,35 +11,68 @@ namespace ElevatorProblem
 
         static void Main(string[] args)
         {
+            //Uncomment the lines below to view the result of the scenarios.
+            //TenFloorsElevatorOn5FloorRequestsFrom8To1From1To10Floor();
+            //TwentyFloorsElevatorOn3FloorRequestsFrom8To1From1To7From3To15Floor();
+
             Setup();
 
-            while (true)
+            WriteLine("\n========================= Elevador configurado. Agora podemos iniciar a viagem! =========================");
+            WriteLine("\nQual seu nome?");
+            var nome = ReadLine();
+            var passenger = new Passenger(nome);
+
+            WriteLine("\nDigite seu andar atual:");
+            if (!int.TryParse(ReadLine(), out int currentFloor))
+                WriteLine("Andar atual inválido!");
+
+            WriteLine("\nDigite para qual andar deseja ir:");
+            if (!int.TryParse(ReadLine(), out int goToFloor))
+                WriteLine("Andar de destino inválido!");
+
+            bool hasError = true;
+            passenger.DoAction(async () =>
             {
-                WriteLine("\n========================= Elevador configurado. Agora podemos iniciar a viagem! =========================");
-                WriteLine("\nQual seu nome?");
-                var nome = ReadLine();
-                var passenger = new Passenger(nome);
-
-                WriteLine("\nDigite seu andar atual:");
-                if (!int.TryParse(ReadLine(), out int currentFloor))
-                    WriteLine("Andar atual inválido!");
-
-                WriteLine("\nDigite para qual andar deseja ir:");
-                if (!int.TryParse(ReadLine(), out int goToFloor))
-                    WriteLine("Andar de destino inválido!");
-
-                passenger.DoAction(async () =>
+                try
                 {
-                    try
-                    {
-                        await _elevator.RequestAsync(currentFloor, goToFloor);
-                    }
-                    catch (SamePositionException)
-                    {
-                        WriteLine("\nO andar de partida precisa ser diferente do andar de destino!");
-                    }
-                });
-            }
+                    await _elevator.RequestAsync(currentFloor, goToFloor);
+                    hasError = false;
+                }
+                catch (SamePositionException)
+                {
+                    WriteLine("\nO andar de partida precisa ser diferente do andar de destino!");
+                }
+                catch (RouteOutOfRangeException)
+                {
+                    WriteLine("\nO andar de partida é menor que o andar mínimo ou o destino é maior que o andar máximo!");
+                }
+            });
+
+            if (!hasError)
+                WriteLine("\nPor favor, espere pelo resultado.");
+
+            ReadKey();
+        }
+
+        private static void TenFloorsElevatorOn5FloorRequestsFrom8To1From1To10Floor()
+        {
+            _elevator = new Elevator(currentPosition: 5, minPosition: 1, maxPosition: 10);
+            _elevator.StopPositionChangedEvent += StopPositionChangedHandler;
+#pragma warning disable CS4014
+            _elevator.RequestAsync(8, 1);
+#pragma warning restore CS4014
+            _elevator.RequestAsync(1, 10).Wait();
+        }
+
+        private static void TwentyFloorsElevatorOn3FloorRequestsFrom8To1From1To7From3To15Floor()
+        {
+            _elevator = new Elevator(currentPosition: 3, minPosition: 1, maxPosition: 20);
+            _elevator.StopPositionChangedEvent += StopPositionChangedHandler;
+#pragma warning disable CS4014
+            _elevator.RequestAsync(8, 1);
+            _elevator.RequestAsync(1, 7);
+#pragma warning restore CS4014
+            _elevator.RequestAsync(3, 15).Wait();
         }
 
         private static void Setup()
@@ -66,11 +99,12 @@ namespace ElevatorProblem
 
         private static void CurrentPositionChangedHandler(object sender, EventArgs e)
         {
-           // WriteLine($"{_elevator.CurrentPosition}..");
+            // WriteLine($"{_elevator.CurrentPosition}.."); //TODO: Show the current position. No at the moment maybe later
         }
+
         private static void StopPositionChangedHandler(object sender, EventArgs e)
         {
-            WriteLine($"Parou no {_elevator.StopPosition} andar.");
+            WriteLine($"\nParou no {_elevator.StopPosition} andar.");
         }
     }
 }

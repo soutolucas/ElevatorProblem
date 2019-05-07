@@ -9,7 +9,7 @@ namespace ElevatorProblem.Test.Helpers
     {
         public static Elevator Build(int currentFloor, int minFloor, int maxFloor)
         {
-            return new Elevator(currentPositon: currentFloor,
+            return new Elevator(currentPosition: currentFloor,
                                 minPosition: minFloor,
                                 maxPosition: maxFloor);
         }
