@@ -28,7 +28,7 @@ namespace ElevatorProblem.Core.Entities
             private set
             {
                 _currentPosition = value;
-                CheckIfNeedStop();
+                CheckIfNeedStop?.Invoke();
                 CurrentPositionChangedEvent?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -53,7 +53,9 @@ namespace ElevatorProblem.Core.Entities
         
         private SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private SemaphoreSlim _semaphoreRoutes = new SemaphoreSlim(1, 1);
-        private Enums.Direction _currentDirection = Enums.Direction.None;
+
+        private delegate void CheckIfNeedStopDelegate();
+        private CheckIfNeedStopDelegate CheckIfNeedStop;
         #endregion
 
         #region Constructor
@@ -162,24 +164,22 @@ namespace ElevatorProblem.Core.Entities
         {
             int minStartPosition = routeToMove.Min(r => r.StartPosition);
             int maxEndPosition = routeToMove.Max(r => r.EndPosition);
-            _currentDirection = Enums.Direction.Up;
+
+            CheckIfNeedStop = CheckIfNeedStopMoveToUpOnly;
 
             MoveDown(minStartPosition);
             MoveUp(maxEndPosition);
-
-            _currentDirection = Enums.Direction.None;
         }
 
         private void MoveToDownOnlyBehavior(IEnumerable<Route> routeToMove)
         {
             int maxStartPosition = routeToMove.Max(r => r.StartPosition);
             int minEndPosition = routeToMove.Min(r => r.EndPosition);
-            _currentDirection = Enums.Direction.Down;
+
+            CheckIfNeedStop = CheckIfNeedStopMoveToDownOnly;
 
             MoveUp(maxStartPosition);
             MoveDown(minEndPosition);
-
-            _currentDirection = Enums.Direction.None;
         }
 
         private void MoveUp(int position)
@@ -194,15 +194,23 @@ namespace ElevatorProblem.Core.Entities
                 CurrentPosition--;
         }
 
-        private void CheckIfNeedStop()
+        private void CheckIfNeedStopMoveToUpOnly()
         {
-            var stop = _runningRoutes.FirstOrDefault(r => (r.StartPosition == CurrentPosition ||
-                                                            r.EndPosition == CurrentPosition) && 
-                                                            r.Direction == _currentDirection);
+            Route stop = GetStop(Enums.Direction.Up);
             if (stop != null)
-            {
                 StopPosition = CurrentPosition;
-            }
+        }
+
+        private void CheckIfNeedStopMoveToDownOnly()
+        {
+            Route stop = GetStop(Enums.Direction.Down);
+
+            if (stop != null)
+                StopPosition = CurrentPosition;
+        }
+        private Route GetStop(Enums.Direction direction)
+        {
+            return _runningRoutes.FirstOrDefault(r => (r.StartPosition == CurrentPosition || r.EndPosition == CurrentPosition) && r.Direction == direction);
         }
 
         private int CalculateTotalDistance(IEnumerable<Route> goingUp)
