@@ -196,21 +196,22 @@ namespace ElevatorProblem.Core.Entities
 
         private void CheckIfNeedStopMoveToUpOnly()
         {
-            Route stop = GetStop(Enums.Direction.Up);
-            if (stop != null)
+            var isStop = IsStop(Enums.Direction.Up);
+
+            if (isStop)
                 StopPosition = CurrentPosition;
         }
 
         private void CheckIfNeedStopMoveToDownOnly()
         {
-            Route stop = GetStop(Enums.Direction.Down);
+            var isStop = IsStop(Enums.Direction.Down);
 
-            if (stop != null)
+            if (isStop)
                 StopPosition = CurrentPosition;
         }
-        private Route GetStop(Enums.Direction direction)
+        private bool IsStop(Enums.Direction direction)
         {
-            return _runningRoutes.FirstOrDefault(r => (r.StartPosition == CurrentPosition || r.EndPosition == CurrentPosition) && r.Direction == direction);
+            return _runningRoutes.Any(r => (r.StartPosition == CurrentPosition || r.EndPosition == CurrentPosition) && r.Direction == direction);
         }
 
         private int CalculateTotalDistance(IEnumerable<Route> goingUp)
